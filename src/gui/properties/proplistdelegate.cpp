@@ -1,0 +1,194 @@
+#include "proplistdelegate.h"
+
+#include <QApplication>
+#include <QComboBox>
+#include <QModelIndex>
+#include <QPainter>
+#include <QPalette>
+#include <QProgressBar>
+#include <QStyleOptionProgressBar>
+
+#ifdef Q_OS_WIN
+#include <QProxyStyle>
+#endif
+
+#include "base/unicodestrings.h"
+#include "base/utils/misc.h"
+#include "base/utils/string.h"
+#include "propertieswidget.h"
+#include "torrentcontentmodelitem.h"
+
+namespace
+{
+
+    QPalette progressBarDisabledPalette()
+    {
+        auto getPalette = []() {
+                              QProgressBar bar;
+                              bar.setEnabled(false);
+                              QStyleOptionProgressBar opt;
+                              opt.initFrom(&bar);
+                              return opt.palette;
+                          };
+        static QPalette palette = getPalette();
+        return palette;
+    }
+}
+
+PropListDelegate::PropListDelegate(PropertiesWidget *properties)
+    : QItemDelegate(properties)
+    , m_properties(properties)
+{
+}
+
+void PropListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    painter->save();
+    QStyleOptionViewItem opt = QItemDelegate::setOptions(index, option);
+    QItemDelegate::drawBackground(painter, opt, index);
+
+    switch (index.column()) {
+    case PCSIZE:
+    case REMAINING:
+        QItemDelegate::drawDisplay(painter, opt, option.rect, Utils::Misc::friendlyUnit(index.data().toLongLong()));
+        break;
+    case PROGRESS: {
+            if (index.data().toDouble() < 0)
+                break;
+
+            QStyleOptionProgressBar newopt;
+            qreal progress = index.data().toDouble() * 100.;
+            newopt.rect = opt.rect;
+            newopt.text = ((progress == 100.0) ? QString("100%") : Utils::String::fromDouble(progress, 1) + "%");
+            newopt.progress = int(progress);
+            newopt.maximum = 100;
+            newopt.minimum = 0;
+            newopt.textVisible = true;
+            if (index.sibling(index.row(), PRIORITY).data().toInt() == prio::IGNORED) {
+                newopt.state &= ~QStyle::State_Enabled;
+                newopt.palette = progressBarDisabledPalette();
+            }
+            else {
+                newopt.state |= QStyle::State_Enabled;
+            }
+
+#ifndef Q_OS_WIN
+            QApplication::style()->drawControl(QStyle::CE_ProgressBar, &newopt, painter);
+#else
+            // XXX: To avoid having the progress text on the right of the bar
+            QProxyStyle("fusion").drawControl(QStyle::CE_ProgressBar, &newopt, painter, 0);
+#endif
+        }
+        break;
+    case PRIORITY: {
+            QString text = "";
+            switch (index.data().toInt()) {
+            case prio::MIXED:
+                text = tr("Mixed", "Mixed (priorities");
+                break;
+            case prio::IGNORED:
+                text = tr("Not downloaded");
+                break;
+            case prio::HIGH:
+                text = tr("High", "High (priority)");
+                break;
+            case prio::MAXIMUM:
+                text = tr("Maximum", "Maximum (priority)");
+                break;
+            default:
+                text = tr("Normal", "Normal (priority)");
+                break;
+            }
+            QItemDelegate::drawDisplay(painter, opt, option.rect, text);
+        }
+        break;
+    case AVAILABILITY: {
+            const qreal availability = index.data().toDouble();
+            if (availability < 0) {
+                QItemDelegate::drawDisplay(painter, opt, option.rect, tr("N/A"));
+            }
+            else {
+                const QString value = (availability >= 1.0)
+                                        ? QLatin1String("100")
+                                        : Utils::String::fromDouble(availability * 100., 1);
+                QItemDelegate::drawDisplay(painter, opt, option.rect, value + C_THIN_SPACE + QLatin1Char('%'));
+            }
+        }
+        break;
+    default:
+        QItemDelegate::paint(painter, option, index);
+        break;
+    }
+    painter->restore();
+}
+
+void PropListDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    QComboBox *combobox = static_cast<QComboBox *>(editor);
+    // Set combobox index
+    switch (index.data().toInt()) {
+    case prio::IGNORED:
+        combobox->setCurrentIndex(0);
+        break;
+    case prio::HIGH:
+        combobox->setCurrentIndex(2);
+        break;
+    case prio::MAXIMUM:
+        combobox->setCurrentIndex(3);
+        break;
+    default:
+        combobox->setCurrentIndex(1);
+        break;
+    }
+}
+
+QWidget *PropListDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &, const QModelIndex &index) const
+{
+    if (index.column() != PRIORITY) return nullptr;
+
+    if (m_properties) {
+        BitTorrent::TorrentHandle *const torrent = m_properties->getCurrentTorrent();
+        if (!torrent || !torrent->hasMetadata() || torrent->isSeed())
+            return nullptr;
+    }
+
+    if (index.data().toInt() == prio::MIXED)
+        return nullptr;
+
+    QComboBox *editor = new QComboBox(parent);
+    editor->setFocusPolicy(Qt::StrongFocus);
+    editor->addItem(tr("Do not download", "Do not download (priority)"));
+    editor->addItem(tr("Normal", "Normal (priority)"));
+    editor->addItem(tr("High", "High (priority)"));
+    editor->addItem(tr("Maximum", "Maximum (priority)"));
+    return editor;
+}
+
+void PropListDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    QComboBox *combobox = static_cast<QComboBox *>(editor);
+    int value = combobox->currentIndex();
+    qDebug("PropListDelegate: setModelData(%d)", value);
+
+    switch (value) {
+    case 0:
+        model->setData(index, prio::IGNORED); // IGNORED
+        break;
+    case 2:
+        model->setData(index, prio::HIGH); // HIGH
+        break;
+    case 3:
+        model->setData(index, prio::MAXIMUM); // MAX
+        break;
+    default:
+        model->setData(index, prio::NORMAL); // NORMAL
+    }
+
+    emit filteredFilesChanged();
+}
+
+void PropListDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &) const
+{
+    qDebug("UpdateEditor Geometry called");
+    editor->setGeometry(option.rect);
+}

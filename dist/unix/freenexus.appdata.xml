@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2014 sledgehammer999 <sledgehammer999@freenexus.org> -->
+<component type="desktop">
+  <id>freenexus.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0 and OpenSSL</project_license>
+  <name>freeNexus</name>
+  <summary>A Bittorrent Client</summary>
+  <description>
+    <p>
+   Aiming to be a good alternative to all other bittorrent clients out
+   there, freeNexus is fast, stable and provides unicode support as well
+   as many other features. Additionally, freeNexus runs and provides those
+   same features on all major platforms (Linux, Mac OS X, Windows, FreeBSD).
+  </p>
+    <p>
+   It is programmed in C++ / Qt and uses libtorrent (sometimes called
+   libtorrent-rasterbar) by Arvid Norberg. GeoLite data, created by MaxMind,
+   are included in freeNexus. Its features include:
+  </p>
+    <ul>
+      <li>Polished µTorrent-like User Interface</li>
+      <li>Well-integrated and extensible Search Engine</li>
+      <li>All Bittorrent extensions (DHT, Peer Exchange, Full encryption, Magnet/BitComet URIs, ...)</li>
+      <li>Remote control through a Web user interface</li>
+      <li>Advanced control over trackers, peers and torrents</li>
+      <li>UPnP / NAT-PMP port forwarding support</li>
+      <li>Available in ~25 languages (Unicode support)</li>
+      <li>Torrent creation tool</li>
+      <li>Advanced RSS support with download filters (inc. regex)</li>
+      <li>Bandwidth scheduler</li>
+      <li>IP Filtering (eMule and PeerGuardian compatible)</li>
+      <li>IPv6 compliant</li>
+      <li>Sequential downloading (aka "Download in order")</li>
+    </ul>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <image height="675" width="1200">
+    https://alexpl.fedorapeople.org/AppData/freenexus/screens/freenexus_01.png
+   </image>
+    </screenshot>
+    <screenshot>
+      <image height="675" width="1200">
+    https://alexpl.fedorapeople.org/AppData/freenexus/screens/freenexus_02.png
+   </image>
+    </screenshot>
+    <screenshot>
+      <image height="675" width="1200">
+    https://alexpl.fedorapeople.org/AppData/freenexus/screens/freenexus_03.png
+   </image>
+    </screenshot>
+    <screenshot>
+      <image height="675" width="1200">
+    https://alexpl.fedorapeople.org/AppData/freenexus/screens/freenexus_04.png
+   </image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://www.freenexus.org/</url>
+  <update_contact>sledgehammer999@freenexus.org</update_contact>
+  <developer_name>The freeNexus Project</developer_name>
+  <url type="bugtracker">http://bugs.freenexus.org/</url>
+  <url type="donation">https://www.freenexus.org/donate</url>
+  <url type="help">http://forum.freenexus.org/</url>
+  <url type="translate">https://github.com/freenexus/freeNexus/wiki/How-to-translate-freeNexus</url>
+</component>

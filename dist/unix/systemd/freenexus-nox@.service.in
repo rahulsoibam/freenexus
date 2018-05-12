@@ -1,0 +1,14 @@
+[Unit]
+Description=freeNexusi-nox service for user %I
+
+Documentation=man:freenexus-nox(1)
+After=network.target
+
+[Service]
+Type=simple
+PrivateTmp=false
+User=%i
+ExecStart=@EXPAND_BINDIR@/freenexus-nox
+
+[Install]
+WantedBy=multi-user.target
